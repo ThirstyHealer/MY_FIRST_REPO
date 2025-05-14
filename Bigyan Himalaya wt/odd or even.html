@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odd or Even Checker</title>
+</head>
+<body>
+    <h1>Check if a Number is Odd or Even</h1>
+    <div id="output"></div>
+
+    <script>
+        let output = document.getElementById('output'); // Reference to the output div
+        
+        for (let i = 0; i <= 15; i++) {
+            let message;
+            if (i % 2 === 0) {
+                message = i + " is even";
+            } else {
+                message = i + " is odd";
+            }
+            output.innerHTML += message + "<br>"; // Append the message to the div with a line break
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,615 @@
+
+    <Skip to content
+ 
+    Search Gists
+    Search...
+    All gists
+    Back to GitHub
+    Sign in
+    Sign up
+    Instantly share code, notes, and snippets.
+    
+    @ZiKT1229
+    ZiKT1229/README.md
+    Forked from straker/README.md
+    Created 7 years ago
+    Code
+    Revisions
+    8
+    Stars
+    35
+    Forks
+    27
+    Clone this repository at &lt;script src=&quot;https://gist.github.com/ZiKT1229/5935a10ce818ea7b851ea85ecf55b4da.js&quot;&gt;&lt;/script&gt;
+    <script src="https://gist.github.com/ZiKT1229/5935a10ce818ea7b851ea85ecf55b4da.js"></script>
+    Basic Snake HTML Game
+    README.md
+    Basic Snake HTML Game
+    Snake is a fun game to make as it doesn't require a lot of code (less than 100 lines with all comments removed). This is a basic implementation of the snake game, but it's missing a few things intentionally and they're left as further exploration for the reader.
+    
+    Further Exploration
+    Score
+    When the snake eats an apple, the score should increase by one. Use context.fillText() to display the score to the screen
+    Mobile and touchscreen support
+    Allow the game to be scalled down to a phone size. See https://codepen.io/straker/pen/VazMaL
+    Support touch controls
+    Better apple spawning
+    Currently the apple spawns in any random grid in the game, even if the snake is already on that spot. Improve it so it only spanws in empty grid locations
+    snake.html
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title></title>
+      <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+      }
+    
+      body {
+        background: wheat;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      canvas {
+        border: 1px solid white;
+      }
+      </style>
+    </head>
+    <body>
+    <canvas width="400" height="400" id="game"></canvas>
+    <script>
+    var canvas = document.getElementById('game');
+    var context = canvas.getContext('2d');
+    
+    var grid = 16;
+    var count = 0;
+      
+    var snake = {
+      x: 160,
+      y: 160,
+      
+      // snake velocity. moves one grid length every frame in either the x or y direction
+      dx: grid,
+      dy: 0,
+      
+      // keep track of all grids the snake body occupies
+      cells: [],
+      
+      // length of the snake. grows when eating an apple
+      maxCells: 4
+    };
+    var apple = {
+      x: 320,
+      y: 320
+    };
+    
+    // get random whole numbers in a specific range
+    // @see https://stackoverflow.com/a/1527820/2124254
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min)) + min;
+    }
+    
+    // game loop
+    function loop() {
+      requestAnimationFrame(loop);
+    
+      // slow game loop to 15 fps instead of 60 (60/15 = 4)
+      if (++count < 4) {
+        return;
+      }
+    
+      count = 0;
+      context.clearRect(0,0,canvas.width,canvas.height);
+    
+      // move snake by it's velocity
+      snake.x += snake.dx;
+      snake.y += snake.dy;
+    
+      // wrap snake position horizontally on edge of screen
+      if (snake.x < 0) {
+        snake.x = canvas.width - grid;
+      }
+      else if (snake.x >= canvas.width) {
+        snake.x = 0;
+      }
+      
+      // wrap snake position vertically on edge of screen
+      if (snake.y < 0) {
+        snake.y = canvas.height - grid;
+      }
+      else if (snake.y >= canvas.height) {
+        snake.y = 0;
+      }
+    
+      // keep track of where snake has been. front of the array is always the head
+      snake.cells.unshift({x: snake.x, y: snake.y});
+    
+      // remove cells as we move away from them
+      if (snake.cells.length > snake.maxCells) {
+        snake.cells.pop();
+      }
+    
+      // draw apple
+      context.fillStyle = 'red';
+      context.fillRect(apple.x, apple.y, grid-1, grid-1);
+    
+      // draw snake two cell at a time
+      context.fillStyle = 'green';
+      snake.cells.forEach(function(cell, index) {
+        
+        // drawing 1 px smaller than the grid creates a grid effect in the snake body so you can see how long it is
+        context.fillRect(cell.x, cell.y, grid-1, grid-1);  
+    
+        // snake ate apple
+        if (cell.x === apple.x && cell.y === apple.y) {
+          snake.maxCells++;
+    
+          // canvas is 400x400 which is 25x25 grids 
+          apple.x = getRandomInt(0, 25) * grid;
+          apple.y = getRandomInt(0, 25) * grid;
+        }
+    
+        // check collision with all cells after this one (modified bubble sort)
+        for (var i = index + 1; i < snake.cells.length; i++) {
+          
+          // snake occupies same space as a body part. reset game
+          if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+            snake.x = 100;
+            snake.y = 160;
+            snake.cells = [];
+            snake.maxCells = 4;
+            snake.dx = grid;
+            snake.dy = 0;
+    
+            apple.x = getRandomInt(0, 25) * grid;
+            apple.y = getRandomInt(0, 25) * grid;
+          }
+        }
+      });
+    }
+    
+    // listen to keyboard events to move the snake
+    document.addEventListener('keydown', function(e) {
+      // prevent snake from backtracking on itself by checking that it's 
+      // not already moving on the same axis (pressing left while moving
+      // left won't do anything, and pressing right while moving left
+      // shouldn't let you collide with your own body)
+      
+      // left arrow key
+      if (e.which === 37 && snake.dx === 0) {
+        snake.dx = -grid;
+        snake.dy = 0;
+      }
+      // up arrow key
+      else if (e.which === 38 && snake.dy === 0) {
+        snake.dy = -grid;
+        snake.dx = 0;
+      }
+      // right arrow key
+      else if (e.which === 39 && snake.dx === 0) {
+        snake.dx = grid;
+        snake.dy = 0;
+      }
+      // down arrow key
+      else if (e.which === 40 && snake.dy === 0) {
+        snake.dy = grid;
+        snake.dx = 0;
+      }
+    });
+    
+    // start the game
+    requestAnimationFrame(loop);
+    </script>
+    </body>
+    </html>
+    Load earlier comments...
+    @Wozski
+    Wozski commented on Apr 25, 2022
+    It is Awesome!!
+    
+    @GraysonPit
+    GraysonPit commented on Apr 29, 2022
+    How do I implement the score?
+    
+    @CorvoBonk
+    CorvoBonk commented on May 8, 2022
+    Brilliant.
+    
+    @3koZQLkz7n
+    3koZQLkz7n commented on May 24, 2022
+    Can someone tell me how to implement a score counter and a high score??? i am using notepad++ btw
+    
+    @J-zinu
+    J-zinu commented on Jul 28, 2022
+    nice
+    
+    @noc1357
+    noc1357 commented on Sep 6, 2022
+    how make a score btw?
+    
+    @QuickMash
+    QuickMash commented on Dec 7, 2022
+    You could create a counter using JavaScript.
+    
+    @schoolgamer1239
+    schoolgamer1239 commented on Dec 13, 2022
+    bruh I JUST FOOLED ALL MY FRIENDSS WITH THIS CODE
+    
+    @J0513-301
+    J0513-301 commented on Jan 13, 2023
+    Hey! Quick question, any way to change the amount of apples spawning?
+    
+    Thanks a lot!
+    
+    Hey, I wanted to just say, you can make another by creating a second variable (perhaps var apple2)? and wherever you see the first apple included in the code, just duplicate it and change it to apple 2. Hope this helps =)
+    
+    @J0513-301
+    J0513-301 commented on Jan 13, 2023 • 
+    how make a score btw?
+    
+    (I'm not sure if this code depends on the platform you use)
+    I made a score like this..
+    div class="container"
+    span id="score" class="score"
+    0
+    /span
+    div class="words"
+    div class="center"
+    Apples eaten /div
+    /div
+    /div
+    (The "<" symbols made text disappear for whatever reason so just pretend the divs and spans have "<" around them)
+    And the JS looks like this:
+    var oldScore = 0; function addOldScore() {   if (score > oldScore) { oldScore = score; alert ("New high score! " +  oldScore);  //I did an alert but you can make a custom score } else { //Whatever you want when their score didn't beat their old score }  } var resetScore = function() { score = 0; renderScore(); } var score = 0; var scoreElement = document.querySelector( '.score' ); var addPoint = function() { score++; renderScore(); } var renderScore = function() { scoreElement.innerHTML = score; } 
+    And in this if statement(if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y )), add this:
+    addOldScore(); resetScore();
+    Let me know if there are any issues =)
+    
+    @someshwarholkar
+    someshwarholkar commented on Mar 12, 2023
+    how to control its speed
+    // slow game loop to 15 fps instead of 60 (60/15 = 4)
+    if (++count < 4) {
+    return;
+    }
+    increases this value 4(8)
+    
+    @jsinc-sebastian
+    jsinc-sebastian commented on Mar 20, 2023
+    Just shows a black BG with corners
+    
+    @Qweenfumzy20
+    Qweenfumzy20 commented on May 17, 2023
+    How do I set it to tell the player if it win or lose
+    
+    @AnkanTheCoder
+    AnkanTheCoder commented on Aug 18, 2023
+    How do I control it(keys)?
+    
+    @J0513-301
+    J0513-301 commented on Aug 21, 2023
+    How do I control it(keys)?
+    
+    It should have arrow key controls already, the code is there. Just use up, down, left, right
+    
+    @bodizeno
+    bodizeno commented on Oct 31, 2023
+    wow cool
+    
+    @ZuuZoo
+    ZuuZoo commented on Nov 9, 2023
+    How can i change that to everytime when the snake ates a apple it's spawns a new delayed and i don't want the delay. How can i fix that?
+    
+    @J0513-301
+    J0513-301 commented on Nov 9, 2023 • 
+    How do I set it to tell the player if it win or lose
+    
+    So In the code there’s a function (this one): `if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+    snake.x = 160;
+    snake.y = 160;
+    snake.cells = [];
+    snake.maxCells = 4;
+    snake.dx = grid;
+    snake.dy = 0;
+    
+        apple.x = getRandomInt(0, 25) * grid;
+        apple.y = getRandomInt(0, 25) * grid;
+      } `
+    So after snake.dy = 0; the game is restarting so you can put anything after that line to make it show the player won or lost. I suggest making a div that is blank from the start and then the game restart function makes the div equal to a specific text such as you died. To make a you won screen you would have to implement a few more things depending on what you consider as winning. Let me know if you need any more help
+    
+    @ImthySafa
+    ImthySafa commented on Nov 19, 2023
+    Nice bro
+    
+    @svenwlive
+    svenwlive commented on Nov 29, 2023
+    Please help me with adding the score to the game. I'm not very good with programming, so im hoping someone is able to at least show me anything.
+    image
+    currently it looks something like this.
+    
+    @J0513-301
+    J0513-301 commented on Nov 29, 2023
+    Please help me with adding the score to the game. I'm not very good with programming, so im hoping someone is able to at least show me anything.
+    image
+    currently it looks something like this.
+    
+    So the picture is what it’s supposed to look like, so you are on the right track. Can you let me know what Software your using to place the code in? That way I know how to better assist you, and you can also check my previous comments and replies as I have answered similar questions before. Let me know =]
+    
+    @svenwlive
+    svenwlive commented on Nov 29, 2023
+    Please help me with adding the score to the game. I'm not very good with programming, so im hoping someone is able to at least show me anything.
+    image
+    currently it looks something like this.
+    
+    So the picture is what it’s supposed to look like, so you are on the right track. Can you let me know what Software your using to place the code in? That way I know how to better assist you, and you can also check my previous comments and replies as I have answered similar questions before. Let me know =]
+    
+    Im using VS Code connected to GitHub with codespaces.
+    
+    @roniui
+    roniui commented on Apr 11, 2024 • 
+    how is it ?
+    
+    https://roniui.github.io/game/snake.html
+    
+    *link updated
+    
+    @J-zinu
+    J-zinu commented on May 14, 2024
+    how is it ?
+    
+    https://nwdevin.github.io/Dustbin/snaketest.html
+    
+    it's good.
+    
+    @J-zinu
+    J-zinu commented on May 14, 2024
+    How do I control it(keys)?
+    
+    you set key down arrows
+    
+    triggered on key down not on key press
+    
+    there is key down code
+    
+    left = 37
+    up = 38
+    right = 39
+    down = 40
+    
+    keep this values and you set this trigger code
+    
+    @J-zinu
+    J-zinu commented on May 14, 2024 • 
+    게임에 점수를 추가할 수 있도록 도와주세요. 저는 프로그래밍을 잘 하지 못해서 누군가가 최소한 무엇이든 보여줄 수 있기를 바랍니다. image 현재 이런 모습입니다.
+    
+    you should apply this HTML code
+    
+    take this example code
+    
+    https://www.w3schools.com/graphics/game_score.asp
+    
+    flowing this URL that's sample code and try your self
+    
+    @J-zinu
+    J-zinu commented on May 14, 2024
+    how make a score btw?
+    
+    you should apply this HTML code
+    
+    take this example code
+    
+    https://www.w3schools.com/graphics/game_score.asp
+    
+    flowing this URL that's sample code and try your self
+    
+    @J-zinu
+    J-zinu commented on May 14, 2024
+    Please help me with adding the score to the game. I'm not very good with programming, so im hoping someone is able to at least show me anything.
+    image
+    currently it looks something like this.
+    
+    So the picture is what it’s supposed to look like, so you are on the right track. Can you let me know what Software your using to place the code in? That way I know how to better assist you, and you can also check my previous comments and replies as I have answered similar questions before. Let me know =]
+    
+    Im using VS Code connected to GitHub with codespaces.
+    
+    hello you should apply this HTML CODE
+    
+    take this example code
+    
+    https://www.w3schools.com/graphics/game_score.asp
+    
+    flowing this url that's sample code
+    and you need score and you want this.
+    
+    some code is not you want, but this code is simple and easy
+    
+    @harisonfekadu
+    harisonfekadu commented on Jun 13, 2024
+    I embedded this game into a QR code. Check it out here!
+    
+    @Grinzaza
+    Grinzaza commented on Feb 10 • 
+    add
+    
+    start button
+    score
+    game over
+    <!DOCTYPE html>
+    <html lang="th">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Snake Game</title>
+      <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400&display=swap" rel="stylesheet">
+      <style>
+        html, body {
+          height: 100%;
+          margin: 0;
+          font-family: 'Kanit', sans-serif;
+        }
+    
+        body {
+          background: black;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        canvas {
+          border: 1px solid white;
+        }
+    
+        #start-button {
+          margin-top: 20px;
+          padding: 10px 20px;
+          font-size: 16px;
+          cursor: pointer;
+        }
+    
+        #score {
+          color: white;
+          font-size: 18px;
+          margin-top: 10px;
+        }
+    
+        #game-over {
+          color: red;
+          font-size: 24px;
+          display: none;
+          margin-top: 20px;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 1;
+        }
+      </style>
+    </head>
+    <body>
+    
+    <canvas width="400" height="400" id="game"></canvas>
+    <button id="start-button">Start</button>
+    <div id="score">Score: 0</div>
+    <div id="game-over">Game Over!</div>
+    
+    <script>
+    var canvas = document.getElementById('game');
+    var context = canvas.getContext('2d');
+    
+    var grid = 16;
+    var count = 0;
+    
+    var snake = {
+      x: 160,
+      y: 160,
+      dx: grid,
+      dy: 0,
+      cells: [],
+      maxCells: 4
+    };
+    
+    var apple = {
+      x: 320,
+      y: 320
+    };
+    
+    var score = 0;
+    
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min)) + min;
+    }
+    
+    function loop() {
+      requestAnimationFrame(loop);
+    
+      if (++count < 4) {
+        return;
+      }
+    
+      count = 0;
+      context.clearRect(0, 0, canvas.width, canvas.height);
+    
+      snake.x += snake.dx;
+      snake.y += snake.dy;
+    
+      if (snake.x < 0 || snake.x >= canvas.width || snake.y < 0 || snake.y >= canvas.height) {
+        gameOver();
+        return;
+      }
+    
+      snake.cells.unshift({ x: snake.x, y: snake.y });
+    
+      if (snake.cells.length > snake.maxCells) {
+        snake.cells.pop();
+      }
+    
+      context.fillStyle = 'red';
+      context.fillRect(apple.x, apple.y, grid - 1, grid - 1);
+    
+      context.fillStyle = 'green';
+      snake.cells.forEach(function(cell, index) {
+        context.fillRect(cell.x, cell.y, grid - 1, grid - 1);  
+    
+        if (cell.x === apple.x && cell.y === apple.y) {
+          snake.maxCells++;
+          score++;
+          document.getElementById('score').innerHTML = 'Score: ' + score;
+          
+          apple.x = getRandomInt(0, 25) * grid;
+          apple.y = getRandomInt(0, 25) * grid;
+        }
+    
+        for (var i = index + 1; i < snake.cells.length; i++) {
+          if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+            gameOver();
+          }
+        }
+      });
+    }
+    
+    function gameOver() {
+      document.getElementById('game-over').style.display = 'block';
+    
+      setTimeout(function() {
+        location.reload();
+      }, 500);
+    }
+    
+    document.addEventListener('keydown', function(e) {
+      if (e.which === 37 && snake.dx === 0) {
+        snake.dx = -grid;
+        snake.dy = 0;
+      } else if (e.which === 38 && snake.dy === 0) {
+        snake.dy = -grid;
+        snake.dx = 0;
+      } else if (e.which === 39 && snake.dx === 0) {
+        snake.dx = grid;
+        snake.dy = 0;
+      } else if (e.which === 40 && snake.dy === 0) {
+        snake.dy = grid;
+        snake.dx = 0;
+      }
+    });
+    
+    document.getElementById('start-button').addEventListener('click', function() {
+      requestAnimationFrame(loop);
+    });
+    </script>
+    </body>
+    </html>
+     to join this conversation on GitHub. Already have an account? Sign in to comment
+    Footer
+    © 2025 GitHub, Inc.
+    Footer navigation
+    Terms
+    Privacy
+    Security
+    Status
+    Docs
+    Contact
+    Manage cookies
+    Do not share my personal information
+    
